@@ -18,10 +18,17 @@ namespace Player
         public float maxWalkSpeed;
         public float timeToMaxWalkSpeed;
         public float timeToStop;
+        public float timeToMaxAirSpeed;
+        public float timeToAirStop;
+
+        public bool fastReverseInAir = true;
 
 
         private float walkAcc;
         private float walkDec;
+
+        private float airWalkAcc;
+        private float airWalkDec;
 
         private float jumpVelocity;
         private float fallingGravity;
@@ -37,18 +44,26 @@ namespace Player
             velocity = new Vector2(0, 0);
             controller = GetComponent<MoveController2D>();
 
-            walkAcc = 1;
             ComputeGravityAndJumpHeight();
+            ComputeWalkAcceleration();
         }
 
 
         private void ComputeGravityAndJumpHeight()
         {
-
             jumpingGravity = (2 * jumpHeight) / (timeToMaxHeight * timeToMaxHeight);
             fallingGravity = (2 * jumpHeight) / (timeFromMaxHeight * timeFromMaxHeight);
             jumpVelocity = jumpingGravity * timeToMaxHeight;
             Debug.Log(fallingGravity + ", " + jumpVelocity) ;
+        }
+
+        private void ComputeWalkAcceleration()
+        {
+            walkAcc = maxWalkSpeed / timeToMaxWalkSpeed;
+            walkDec = maxWalkSpeed / timeToStop;
+
+            airWalkAcc = maxWalkSpeed / timeToMaxAirSpeed;
+            airWalkDec = maxWalkSpeed / timeToAirStop;
         }
 
         // Update is called once per frame
@@ -83,30 +98,59 @@ namespace Player
         private void UpdateWalk()
         {
             float inputValue = Input.GetAxis("Horizontal");
+            float acceleration;
+            float decceleration;
 
+            bool canDoFastReverse = controller.State.collisionDown || fastReverseInAir;
+
+            if (controller.State.collisionDown) //grounded
+            {
+                acceleration = inputValue * walkAcc * Time.deltaTime;
+                decceleration = -1 * Mathf.Sign(velocity.x) * walkDec * Time.deltaTime;
+            } else //air
+            {
+                acceleration = inputValue * airWalkAcc * Time.deltaTime;
+                decceleration = -1 * Mathf.Sign(velocity.x) * airWalkDec * Time.deltaTime;
+            }
+            
 
             if (inputValue == 0)
             {
-                velocity.x = 0;
+               
+
+                if (Mathf.Abs(decceleration) >= Mathf.Abs(velocity.x))
+                {
+                    velocity.x = 0;
+                } else
+                {
+                    velocity.x += decceleration;
+                }
             }
-            else
+            else if (Mathf.Sign(inputValue) == Mathf.Sign(velocity.x) || velocity.x == 0 || !canDoFastReverse)
             {
-                float acceleration = inputValue * walkAcc;
+                
 
                 velocity.x = velocity.x + acceleration;
 
                 velocity.x = Mathf.Clamp(velocity.x, -maxWalkSpeed, maxWalkSpeed);
+            } else if (canDoFastReverse)
+            {
+                velocity.x = -velocity.x; //fast reversal
             }
         }
 
 
         private void DoJump()
         {
+            bool isHoldingJump = Input.GetButton("Jump");
             if (Input.GetButtonDown("Jump") && controller.State.collisionDown)
             {
                 Debug.Log("jumping");
                 velocity.y = jumpVelocity;
                 isJumping = true;
+            } else if (!isHoldingJump && isJumping) //released jump early
+            {
+                velocity.y = 0;
             }
         }
     }
