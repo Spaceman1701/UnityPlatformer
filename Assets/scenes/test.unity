@@ -1080,6 +1080,7 @@ GameObject:
   - component: {fileID: 1763726468}
   - component: {fileID: 1763726469}
   - component: {fileID: 1763726467}
+  - component: {fileID: 1763726470}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1102,15 +1103,8 @@ MonoBehaviour:
   terrian:
     serializedVersion: 2
     m_Bits: 4294967295
-  jumpHeight: 4
-  timeToMaxHeight: 0.4
-  timeFromMaxHeight: 0.25
-  maxWalkSpeed: 7
-  timeToMaxWalkSpeed: 0.05
-  timeToStop: 0
   collisionResolution: {x: 4, y: 4}
-  collisionMargin: 0.1
-  velocity: {x: 0, y: 0}
+  collisionMargin: 0
 --- !u!4 &1763726468
 Transform:
   m_ObjectHideFlags: 0
@@ -1137,6 +1131,25 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1763726470
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1763726466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d22f22b26b13e334095e9c17a675585d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  jumpHeight: 4.02
+  timeToMaxHeight: 0.4
+  timeFromMaxHeight: 0.3
+  maxWalkSpeed: 7
+  timeToMaxWalkSpeed: 0.1
+  timeToStop: 0.01
+  velocity: {x: 0, y: 0}
+  isJumping: 0
 --- !u!1 &2031114993
 GameObject:
   m_ObjectHideFlags: 0

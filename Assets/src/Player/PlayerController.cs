@@ -1,34 +1,15 @@
-﻿using UnityEngine;
-
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using Entity2D;
 
 namespace Player
 {
+    [RequireComponent(typeof(MoveController2D))]
     public class PlayerController : MonoBehaviour
     {
 
-        private struct CollisionState
-        {
-            public bool falling;
-            public bool jumping;
-
-            public bool collisionUp;
-            public bool collisionDown;
-            public bool collisionLeft;
-            public bool collisionRight;
-
-            public void Reset()
-            {
-                falling = false;
-                jumping = false;
-                collisionDown = false;
-                collisionLeft = false;
-                collisionRight = false;
-                collisionUp = false;
-            }
-        }
-
-        public BoxCollider hitbox;
-        public LayerMask terrian;
+        private MoveController2D controller;
 
         public float jumpHeight;
         public float timeToMaxHeight;
@@ -38,141 +19,95 @@ namespace Player
         public float timeToMaxWalkSpeed;
         public float timeToStop;
 
-        public Vector2Int collisionResolution;
-
-        public float collisionMargin = 0f;
-
-
-
-        private Vector2 hitboxExtents;
-
-        private float upGravity;
-        private float downGravity;
-        private float jumpVelocity;
 
         private float walkAcc;
         private float walkDec;
 
-        private CollisionState collisionState;
+        private float jumpVelocity;
+        private float fallingGravity;
+        private float jumpingGravity;
 
         public Vector2 velocity;
 
+        public bool isJumping = false; //either falling or jumping.. useful for choosing gravity
+
         // Use this for initialization
-        public void Start()
+        void Start()
         {
-            Debug.Log("init player controller");
+            velocity = new Vector2(0, 0);
+            controller = GetComponent<MoveController2D>();
 
-            hitboxExtents = new Vector2(hitbox.size.x / 2.0f, hitbox.size.y / 2.0f);
+            walkAcc = 1;
+            ComputeGravityAndJumpHeight();
+        }
 
-            walkAcc = 2f;
-            walkDec = 1;
+
+        private void ComputeGravityAndJumpHeight()
+        {
+
+            jumpingGravity = (2 * jumpHeight) / (timeToMaxHeight * timeToMaxHeight);
+            fallingGravity = (2 * jumpHeight) / (timeFromMaxHeight * timeFromMaxHeight);
+            jumpVelocity = jumpingGravity * timeToMaxHeight;
+            Debug.Log(fallingGravity + ", " + jumpVelocity) ;
         }
 
         // Update is called once per frame
-        public void Update()
+        void Update()
         {
-            collisionState.Reset();
-            velocity += new Vector2(0, -0.5f) * Time.deltaTime;
+
+            if (controller.State.collisionDown || controller.State.collisionUp)
+            {
+                velocity.y = 0;
+            }
+
+            if (isJumping && velocity.y <= 0)
+            {
+                isJumping = false;
+            }
+
             UpdateWalk();
-            Vector2 pos = new Vector2(transform.position.x, transform.position.y);
-            HandleCollisionBottom(pos);
-            HandleCollisionRight(pos);
-            HandleCollisionLeft(pos);
             DoJump();
 
-            Vector2 newPos = pos + velocity ;
-            transform.position = new Vector3(newPos.x, newPos.y);
+            if (isJumping)
+            {
+                velocity.y -= jumpingGravity * Time.deltaTime;
+            } else
+            {
+                velocity.y -= fallingGravity * Time.deltaTime;
+            }
+
+            controller.Move(velocity * Time.deltaTime);
         }
 
-        private void DoJump()
-        {
-            if (Input.GetButton("Jump") && collisionState.collisionDown)
-            {
-                Debug.Log("jumping");
-                velocity += new Vector2(0, 10) * Time.deltaTime;
-            }
-        }
 
         private void UpdateWalk()
         {
             float inputValue = Input.GetAxis("Horizontal");
 
-            
+
             if (inputValue == 0)
             {
-               velocity.x = 0;
-            } else
+                velocity.x = 0;
+            }
+            else
             {
-                float acceleration = inputValue * walkAcc * Time.deltaTime;
+                float acceleration = inputValue * walkAcc;
 
                 velocity.x = velocity.x + acceleration;
 
-                if (velocity.x > 0)
-                {
-                    velocity.x = Mathf.Min(maxWalkSpeed * Time.deltaTime, velocity.x);
-                } else if (velocity.x < 0)
-                {
-                    velocity.x = Mathf.Max(-maxWalkSpeed * Time.deltaTime, velocity.x);
-                }
+                velocity.x = Mathf.Clamp(velocity.x, -maxWalkSpeed, maxWalkSpeed);
             }
         }
 
 
-        private void HandleCollisionBottom(Vector2 position)
+        private void DoJump()
         {
-            Vector2 startPos = new Vector2(position.x - hitboxExtents.x, position.y - hitboxExtents.y);
-            Vector2 endPos = new Vector2(position.x + hitboxExtents.y, position.y - hitboxExtents.y);
-
-            float collisionDistance = CheckCollision(startPos, endPos, Vector2.down, Mathf.Abs(velocity.y), collisionResolution.x);
-
-            if (collisionDistance < Mathf.Abs(velocity.y))
+            if (Input.GetButtonDown("Jump") && controller.State.collisionDown)
             {
-                velocity.y = collisionDistance * Mathf.Sign(velocity.y);
-                collisionState.collisionDown = true;
+                Debug.Log("jumping");
+                velocity.y = jumpVelocity;
+                isJumping = true;
             }
-        }
-
-        private void HandleCollisionRight(Vector2 position)
-        {
-            Vector2 startPos = new Vector2(position.x + hitboxExtents.x, position.y + hitboxExtents.y);
-            Vector2 endPos = new Vector2(position.x + hitboxExtents.x, position.y - hitboxExtents.y + 0.001f);
-
-            float collisionDistance = CheckCollision(startPos, endPos, Vector2.right, Mathf.Abs(velocity.x), collisionResolution.x);
-            if (collisionDistance < Mathf.Abs(velocity.x) && velocity.x > 0)
-            {
-                velocity.x = collisionDistance * Mathf.Sign(velocity.x);
-            }
-        }
-
-        private void HandleCollisionLeft(Vector2 position)
-        {
-            Vector2 startPos = new Vector2(position.x - hitboxExtents.x, position.y + hitboxExtents.y);
-            Vector2 endPos = new Vector2(position.x - hitboxExtents.x, position.y - hitboxExtents.y + 0.001f);
-
-            float collisionDistance = CheckCollision(startPos, endPos, Vector2.right, Mathf.Abs(velocity.x), collisionResolution.x);
-            if (collisionDistance < Mathf.Abs(velocity.x) && velocity.x < 0)
-            {
-                velocity.x = collisionDistance * Mathf.Sign(velocity.x);
-            }
-        }
-
-
-        private float CheckCollision(Vector2 startPos, Vector2 endPos, Vector2 dir, float maxDist, int resolution)
-        {
-            float rayDistance = maxDist + collisionMargin;
-
-            for (int i = 0; i < resolution; i++)
-            {
-                Vector2 rayOrigin = Vector2.Lerp(startPos, endPos, (float)i / (resolution - 1));
-
-                RaycastHit2D hit = Physics2D.Raycast(rayOrigin, dir, rayDistance, terrian);    
-                if (hit && hit.distance < rayDistance)
-                {
-                    rayDistance = hit.distance;
-                }
-            }
-
-            return rayDistance;
         }
     }
 }
