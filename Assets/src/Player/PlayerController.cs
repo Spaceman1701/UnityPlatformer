@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Entity2D;
+using Camera;
 
 namespace Player
 {
     [RequireComponent(typeof(MoveController2D))]
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : CameraFollowTarget
     {
 
         private MoveController2D controller;
@@ -151,6 +152,38 @@ namespace Player
             } else if (!isHoldingJump && isJumping) //released jump early
             {
                 velocity.y = 0;
+            }
+        }
+
+        public override Vector2 Position
+        {
+            get
+            {
+                return new Vector2(transform.position.x, transform.position.y);
+            }
+        }
+
+        public override Vector2 Velocity
+        {
+            get
+            {
+                return velocity;
+            }
+        }
+
+        public override Vector2 Acceleration
+        {
+            get
+            {
+                return new Vector2();
+            }
+        }
+
+        public override bool IsLanded
+        {
+            get
+            {
+                return controller.State.collisionDown;
             }
         }
     }

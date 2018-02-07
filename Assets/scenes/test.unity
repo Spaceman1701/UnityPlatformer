@@ -206,9 +206,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79fd663e38e29ca46a6ea475486acd43, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  horizontalConvergeRate: 0.6
-  verticalConvergeRate: 0
-  target: {fileID: 1763726468}
+  horizontalConvergeRate: 100
+  verticalConvergeRate: 5
+  target: {fileID: 1763726470}
 --- !u!1 &1630020657
 GameObject:
   m_ObjectHideFlags: 0
@@ -1160,7 +1160,7 @@ MonoBehaviour:
   jumpHeight: 5.1
   timeToMaxHeight: 0.4
   timeFromMaxHeight: 0.32
-  maxWalkSpeed: 7
+  maxWalkSpeed: 9.1
   timeToMaxWalkSpeed: 0.1
   timeToStop: 0.06
   timeToMaxAirSpeed: 0.08

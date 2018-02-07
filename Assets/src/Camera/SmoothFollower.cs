@@ -2,26 +2,40 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SmoothFollower : MonoBehaviour {
-
-
-
-    public float horizontalConvergeRate = 0.0001f;
-    public float verticalConvergeRate = 0.00025f;
-
-    public Transform target;
-
-	// Use this for initialization
-	void Start () {
-		
-	}
-
-    private void LateUpdate()
+namespace Camera
+{
+    public class SmoothFollower : MonoBehaviour
     {
 
-        float newX = (1 - horizontalConvergeRate) * transform.position.x + horizontalConvergeRate * target.position.x; 
-        float newY = (1 - verticalConvergeRate) * transform.position.y + verticalConvergeRate * target.position.y;
 
-        transform.position = new Vector3(newX, newY, transform.position.z);
+
+        public float horizontalConvergeRate;
+        public float verticalConvergeRate;
+
+        public CameraFollowTarget target;
+
+        // Use this for initialization
+        void Start()
+        {
+
+        }
+
+        private void LateUpdate()
+        {
+
+
+            float newX = transform.position.x;
+            float newY = transform.position.y;
+
+            newX += (target.Position.x - newX) * horizontalConvergeRate * Time.deltaTime;
+
+            if (target.IsLanded || (target.Velocity.y < 0 && transform.position.y > target.Position.y))
+            {
+                newY += (target.Position.y - newY) * verticalConvergeRate * Time.deltaTime;
+            }
+
+            transform.position = new Vector3(newX, newY, transform.position.z);
+        }
     }
 }
+
