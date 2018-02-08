@@ -1158,8 +1158,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   jumpHeight: 5.1
-  timeToMaxHeight: 0.4
-  timeFromMaxHeight: 0.32
+  jumpDistance: 4
+  fallSpeedMultiplier: 1.6
+  partialJumpMultiplier: 4.1
   maxWalkSpeed: 9.1
   timeToMaxWalkSpeed: 0.1
   timeToStop: 0.06
@@ -1168,6 +1169,7 @@ MonoBehaviour:
   fastReverseInAir: 1
   velocity: {x: 0, y: 0}
   isJumping: 0
+  releasedJumpEarly: 0
 --- !u!1 &2031114993
 GameObject:
   m_ObjectHideFlags: 0

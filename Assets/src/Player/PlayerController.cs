@@ -13,8 +13,10 @@ namespace Player
         private MoveController2D controller;
 
         public float jumpHeight;
-        public float timeToMaxHeight;
-        public float timeFromMaxHeight;
+        public float jumpDistance;
+
+        public float fallSpeedMultiplier;
+        public float partialJumpMultiplier;
 
         public float maxWalkSpeed;
         public float timeToMaxWalkSpeed;
@@ -34,10 +36,12 @@ namespace Player
         private float jumpVelocity;
         private float fallingGravity;
         private float jumpingGravity;
+        private float partialJumpGravity;
 
         public Vector2 velocity;
 
         public bool isJumping = false; //either falling or jumping.. useful for choosing gravity
+        public bool releasedJumpEarly = false; //if player is doing a partial jump
 
         // Use this for initialization
         void Start()
@@ -52,9 +56,12 @@ namespace Player
 
         private void ComputeGravityAndJumpHeight()
         {
-            jumpingGravity = (2 * jumpHeight) / (timeToMaxHeight * timeToMaxHeight);
-            fallingGravity = (2 * jumpHeight) / (timeFromMaxHeight * timeFromMaxHeight);
-            jumpVelocity = jumpingGravity * timeToMaxHeight;
+            jumpingGravity = (2 * jumpHeight * maxWalkSpeed * maxWalkSpeed) / (jumpDistance * jumpDistance);
+            fallingGravity = fallSpeedMultiplier * jumpingGravity;
+            partialJumpGravity = partialJumpMultiplier * jumpingGravity;
+            jumpVelocity = (2 * jumpHeight * maxWalkSpeed) / jumpDistance;
+
+
             Debug.Log(fallingGravity + ", " + jumpVelocity) ;
         }
 
@@ -79,20 +86,31 @@ namespace Player
             if (isJumping && velocity.y <= 0)
             {
                 isJumping = false;
+                releasedJumpEarly = false;
             }
 
             UpdateWalk();
             DoJump();
 
-            if (isJumping)
+            UpdateGravity();
+
+            controller.Move(velocity * Time.deltaTime);
+        }
+
+        private void UpdateGravity()
+        {
+            if (isJumping && !releasedJumpEarly)
             {
                 velocity.y -= jumpingGravity * Time.deltaTime;
-            } else
+            }
+            else if (releasedJumpEarly)
+            {
+                velocity.y -= partialJumpGravity * Time.deltaTime;
+            }
+            else
             {
                 velocity.y -= fallingGravity * Time.deltaTime;
             }
-
-            controller.Move(velocity * Time.deltaTime);
         }
 
 
@@ -151,7 +169,7 @@ namespace Player
                 isJumping = true;
             } else if (!isHoldingJump && isJumping) //released jump early
             {
-                velocity.y = 0;
+                releasedJumpEarly = true;
             }
         }
 
