@@ -39,6 +39,7 @@ namespace Player
         private float partialJumpGravity;
 
         public Vector2 velocity;
+        public Vector2 acceleration;
 
         public bool isJumping = false; //either falling or jumping.. useful for choosing gravity
         public bool releasedJumpEarly = false; //if player is doing a partial jump
@@ -77,6 +78,7 @@ namespace Player
         // Update is called once per frame
         void Update()
         {
+            acceleration = new Vector2();
 
             if (controller.State.collisionDown || controller.State.collisionUp)
             {
@@ -94,22 +96,23 @@ namespace Player
 
             UpdateGravity();
 
-            controller.Move(velocity * Time.deltaTime);
+            velocity += acceleration * Time.deltaTime;
+            controller.Move(velocity * Time.deltaTime, acceleration * Time.deltaTime * Time.deltaTime);
         }
 
         private void UpdateGravity()
         {
             if (isJumping && !releasedJumpEarly)
             {
-                velocity.y -= jumpingGravity * Time.deltaTime;
+                acceleration.y -= jumpingGravity;
             }
             else if (releasedJumpEarly)
             {
-                velocity.y -= partialJumpGravity * Time.deltaTime;
+                acceleration.y -= partialJumpGravity;
             }
             else
             {
-                velocity.y -= fallingGravity * Time.deltaTime;
+                acceleration.y -= fallingGravity;
             }
         }
 
@@ -117,19 +120,19 @@ namespace Player
         private void UpdateWalk()
         {
             float inputValue = Input.GetAxis("Horizontal");
-            float acceleration;
+            float acc;
             float decceleration;
 
             bool canDoFastReverse = controller.State.collisionDown || fastReverseInAir;
 
             if (controller.State.collisionDown) //grounded
             {
-                acceleration = inputValue * walkAcc * Time.deltaTime;
-                decceleration = -1 * Mathf.Sign(velocity.x) * walkDec * Time.deltaTime;
+                acc = inputValue * walkAcc;
+                decceleration = -1 * Mathf.Sign(velocity.x) * walkDec;
             } else //air
             {
-                acceleration = inputValue * airWalkAcc * Time.deltaTime;
-                decceleration = -1 * Mathf.Sign(velocity.x) * airWalkDec * Time.deltaTime;
+                acc = inputValue * airWalkAcc;
+                decceleration = -1 * Mathf.Sign(velocity.x) * airWalkDec;
             }
             
 
@@ -142,18 +145,22 @@ namespace Player
                     velocity.x = 0;
                 } else
                 {
-                    velocity.x += decceleration;
+                    acceleration.x += decceleration;
                 }
             }
             else if (Mathf.Sign(inputValue) == Mathf.Sign(velocity.x) || velocity.x == 0 || !canDoFastReverse)
             {
-                
-
-                velocity.x = velocity.x + acceleration;
 
                 velocity.x = Mathf.Clamp(velocity.x, -maxWalkSpeed, maxWalkSpeed);
+
+                if (Mathf.Abs(velocity.x) < maxWalkSpeed)
+                {
+                    acceleration.x += acc;
+
+                }
             } else if (canDoFastReverse)
             {
+                acceleration.x += acc;
                 velocity.x = -velocity.x; //fast reversal
             }
         }

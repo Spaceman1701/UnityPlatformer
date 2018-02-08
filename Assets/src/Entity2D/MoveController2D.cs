@@ -49,18 +49,18 @@ namespace Entity2D
 
 
         // Update is called once per frame
-        public void Move(Vector2 velocity)
+        public void Move(Vector2 velocity, Vector2 acceleration)
         {
             collisionState.Reset();
-            HandleVerticalCollisions(ref velocity);
-            HandleHorizontalCollisions(ref velocity);
+            HandleVerticalCollisions(ref velocity, ref acceleration);
+            HandleHorizontalCollisions(ref velocity, ref acceleration);
 
-            transform.Translate(new Vector3(velocity.x, velocity.y));
+            transform.Translate(new Vector3(velocity.x, velocity.y) + new Vector3(acceleration.x / 2, acceleration.y / 2));
         }
 
 
 
-        private void HandleVerticalCollisions(ref Vector2 velocity)
+        private void HandleVerticalCollisions(ref Vector2 velocity, ref Vector2 acceleration)
         {
             Vector2 position = new Vector2(transform.position.x, transform.position.y);
 
@@ -78,11 +78,11 @@ namespace Entity2D
                 collisionState.collisionUp = velocity.y > 0;
 
                 velocity.y = Mathf.Sign(velocity.y) * (collisionDist - hitboxExtents.y);
-
+                acceleration.y = 0;
             }
         }
 
-        private void HandleHorizontalCollisions(ref Vector2 velocity)
+        private void HandleHorizontalCollisions(ref Vector2 velocity, ref Vector2 acceleration)
         {
             Vector2 position = new Vector2(transform.position.x, transform.position.y);
 
@@ -101,6 +101,7 @@ namespace Entity2D
                 collisionState.collisionRight = velocity.x > 0;
 
                 velocity.x = Mathf.Sign(velocity.x) * (collisionDist - hitboxExtents.x);
+                acceleration.x = 0;
             }
         }
 
